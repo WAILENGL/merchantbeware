@@ -9,7 +9,7 @@ const adminApiHandler = (req, res) => {
 
 const customersInfo = (req, res) => {
 	fetch(
-		'https://merchantbeware.myshopify.com/admin/api/2024-04/customers.json?',
+		'https://merchantbeware.myshopify.com/admin/api/2024-04/customers.json',
 		{
 			method: 'GET',
 			headers: {
@@ -31,26 +31,29 @@ const customersInfo = (req, res) => {
 						},
 					}
 				)
-					.then((response2) => response2.json())
-					.then((ordersData) => {
-						if (ordersData?.orders?.length > 0) {
-							const gettingdata = data?.customers?.map((customer) => {
-								const ordersDataFilter = ordersData?.orders?.filter(
-									(items) => items?.contact_email === customer?.email
-								);
-
-								return {
-									customerInfo: customer,
-									orderInfo: ordersDataFilter,
-								};
-							});
-							console.log({ gettingdata });
-							res.status(200).json(gettingdata);
-						}
-					});
-			}
-		})
-		.catch((err) => console.log(err.message));
-};
-
+				.then(response2 => response2.json())
+				.then(ordersData => {
+				  if(ordersData?.orders?.length > 0){
+					const gettingdata = data?.customers?.map(customer => {
+					  const ordersDataFilter  = ordersData?.orders?.filter(items => items?.contact_email === customer?.email) 
+		
+					  const filterCustomerInfo = ordersDataFilter?.filter(items => items?.financial_status === 'refunded') 
+		
+					  const ordersTagmap = ordersDataFilter?.map(item => {
+						return filterCustomerInfo?.length > 1 ? {...item, tags: 'bad customer'} : {...item}
+					  })
+		
+					  return {
+						customerInfo : filterCustomerInfo?.length > 1 ? {...customer, tags:'bad customer'} : {...customer},
+						orderInfo: ordersTagmap
+					  }
+					})
+					console.log({gettingdata})
+					res.status(200).json(gettingdata)
+				  }
+				})
+			  }
+			})
+			.catch(err => console.log(err.message))
+		}
 module.exports = { adminApiHandler, customersInfo };
